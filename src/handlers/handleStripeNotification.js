@@ -40,7 +40,8 @@ export async function handleStripeNotification(event) {
 
       const purchaseToken = sub.id
       const orderId = sub.id
-      const purchaseTime = sub.start_date
+      // Stripe devolve timestamps em segundos; resto da api grava em ms.
+      const purchaseTime = sub.start_date * 1000
       const stripeCustomerId = session.customer
 
       const inserted = await insertStripePurchase({
