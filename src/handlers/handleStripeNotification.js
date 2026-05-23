@@ -41,7 +41,12 @@ export async function handleStripeNotification(event) {
       const purchaseToken = sub.id
       const orderId = sub.id
       // Stripe devolve timestamps em segundos; resto da api grava em ms.
+      // expiryTime aqui é provisório (billing_cycle_anchor) — o
+      // invoice.paid sobrescreve com o period_end real logo depois.
+      // Sem isso, hasNewerSubscription ignora essa compra na janela
+      // entre checkout e primeiro invoice.paid.
       const purchaseTime = sub.start_date * 1000
+      const expiryTime = sub.billing_cycle_anchor ? sub.billing_cycle_anchor * 1000 : null
       const stripeCustomerId = session.customer
 
       const inserted = await insertStripePurchase({
@@ -50,6 +55,7 @@ export async function handleStripeNotification(event) {
         productId: plano || 'hunter_plus',
         purchaseToken,
         purchaseTime,
+        expiryTime,
         stripeCustomerId,
       })
 

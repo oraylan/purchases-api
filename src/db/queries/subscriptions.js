@@ -74,9 +74,15 @@ export async function insertIosPurchase({
 }
 
 /**
- * Insere compra Stripe (do site via checkout). Sem `expiry_time` no
- * momento — vem depois nos eventos `invoice.paid`. `purchaseToken`
- * aqui é o subscription id (sub_...), `orderId` idem.
+ * Insere compra Stripe (do site via checkout). `purchaseToken` aqui é o
+ * subscription id (sub_...), `orderId` idem.
+ *
+ * `expiryTime` é setado com `billing_cycle_anchor * 1000` da sub no
+ * momento do checkout pra fechar a janela onde `hasNewerSubscription`
+ * (que filtra `AND expiry_time > nowMs`) ignoraria essa compra recém-
+ * feita antes do primeiro `invoice.paid` chegar. O valor é sobrescrito
+ * com `period_end` quando o invoice.paid chega — esse aqui é só
+ * provisório pra não deixar NULL na janela inicial.
  */
 export async function insertStripePurchase({
   userId,
@@ -84,6 +90,7 @@ export async function insertStripePurchase({
   productId,
   purchaseToken,
   purchaseTime,
+  expiryTime = null,
   platform = 'web',
   stripeCustomerId = null,
 }) {
@@ -91,9 +98,9 @@ export async function insertStripePurchase({
     const [result] = await pool.query(
       `INSERT INTO user_plus (
          user_id, order_id, product_id, purchase_token, purchase_time,
-         platform, stripe_customer_id
-       ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [userId, orderId, productId, purchaseToken, purchaseTime, platform, stripeCustomerId],
+         expiry_time, platform, stripe_customer_id
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [userId, orderId, productId, purchaseToken, purchaseTime, expiryTime, platform, stripeCustomerId],
     )
     return result.affectedRows
   } catch (err) {
