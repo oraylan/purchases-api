@@ -43,6 +43,23 @@ export const PIX_SKUS_MONTHS = Object.freeze({
 })
 
 /**
+ * Duração de teste em MILISSEGUNDOS pra cada SKU PIX. Usado APENAS quando
+ * a env `PIX_TEST_MODE=true`. Em vez de meses reais, expira em minutos —
+ * permite testar fluxo de expiração de PIX no ciclo Android sem ter que
+ * esperar 30 dias.
+ *
+ * NUNCA ativar em produção. Dá conta:
+ *   - mensal     → 3 minutos
+ *   - semestral  → 5 minutos
+ *   - anual      → 10 minutos
+ */
+export const PIX_SKUS_TEST_MS = Object.freeze({
+  hunter_plus_mensal_pix: 3 * 60 * 1000,
+  hunter_plus_semestral_pix: 5 * 60 * 1000,
+  hunter_plus_anual_pix: 10 * 60 * 1000,
+})
+
+/**
  * Adiciona N meses calendário a um timestamp (em ms). Cuida do edge
  * case onde o dia original não existe no mês de destino (ex: 31 jan
  * + 1 mês = último dia de fev). Mantém hora/min/seg/ms originais.

@@ -11,7 +11,8 @@
 //
 // Responde com CODES padronizado.
 import {logger} from '../config/logger.js'
-import {CODES, PIX_SKUS_MONTHS, addMonthsToTimestamp, ok, fail} from './shared.js'
+import {env} from '../config/env.js'
+import {CODES, PIX_SKUS_MONTHS, PIX_SKUS_TEST_MS, addMonthsToTimestamp, ok, fail} from './shared.js'
 import {insertAndroidPurchase} from '../db/queries/subscriptions.js'
 import {ensureAndroidOrderMap, AndroidOrderConflict} from '../db/queries/android.js'
 import {verifyAndroidSubscription} from '../providers/google/verifySubscription.js'
@@ -26,10 +27,25 @@ export async function handleAndroidPurchase(req, reply) {
   const {purchase_token: purchaseToken, order_id: orderId, product_id: productId, purchase_time: purchaseTime, pagamento_unico: pagamentoUnico} = req.body
 
   const isOneTime = Boolean(pagamentoUnico)
-  const monthsPlano = PIX_SKUS_MONTHS[productId] || 0
-  const expiryTime = isOneTime && monthsPlano > 0
-    ? addMonthsToTimestamp(purchaseTime, monthsPlano)
-    : null
+
+  // Calcula expiry_time da compra única (PIX). Modo normal usa meses
+  // calendário (1/6/12). PIX_TEST_MODE=true usa minutos (3/5/10) pra
+  // permitir testar o ciclo de expiração sem esperar 30 dias.
+  let expiryTime = null
+  if (isOneTime) {
+    if (env.pixTestMode) {
+      const testMs = PIX_SKUS_TEST_MS[productId] || 0
+      if (testMs > 0) {
+        expiryTime = Number(purchaseTime) + testMs
+        logger.warn({productId, testMs}, '[PIX_TEST_MODE] expiração reduzida pra minutos')
+      }
+    } else {
+      const monthsPlano = PIX_SKUS_MONTHS[productId] || 0
+      if (monthsPlano > 0) {
+        expiryTime = addMonthsToTimestamp(purchaseTime, monthsPlano)
+      }
+    }
+  }
 
   // 1) Bind orderId → user
   try {

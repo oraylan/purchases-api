@@ -21,6 +21,13 @@ try {
     {port: env.port, env: env.nodeEnv, appleEnv: env.apple.env},
     'purchases-api online',
   )
+
+  if (env.pixTestMode) {
+    logger.warn(
+      '⚠️  PIX_TEST_MODE=true — expiração de PIX reduzida pra minutos (3/5/10). NUNCA usar em prod.',
+    )
+  }
+
   registerJobs()
 } catch (err) {
   logger.fatal({err}, 'falha ao subir servidor')

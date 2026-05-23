@@ -124,6 +124,10 @@ export const env = Object.freeze({
 
   adminToken: process.env.ADMIN_TOKEN,
 
+  // PIX_TEST_MODE=true encurta expiração de PIX pra minutos (3/5/10
+  // em vez de 1/6/12 meses). NUNCA usar em prod. Default: false.
+  pixTestMode: (process.env.PIX_TEST_MODE || '').toLowerCase() === 'true',
+
   paths: {
     root: PROJECT_ROOT,
   },
