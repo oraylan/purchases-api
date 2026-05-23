@@ -7,7 +7,6 @@ module.exports = {
   apps: [
     {
       name: 'papi',
-      alias: 'papi',
       namespace: 'purchases',
       script: './src/index.js',
       instances: 1,
