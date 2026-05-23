@@ -7,7 +7,7 @@ module.exports = {
   apps: [
     {
       name: 'papi',
-      namespace: 'purchases',
+      namespace: 'papi',
       script: './src/index.js',
       instances: 1,
       exec_mode: 'fork',
