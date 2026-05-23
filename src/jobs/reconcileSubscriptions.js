@@ -33,7 +33,7 @@ import {formatUserLabel} from '../utils/userLabel.js'
  */
 const APPLE_ACTIVE_STATUSES = new Set([1, 3, 4])
 
-async function reconcileIosUser({userId, hash, originalTransactionId, productId}) {
+async function reconcileIosUser({userId, hash, originalTransactionId, productId}, {dryRun = false} = {}) {
   try {
     const result = await getSubscriptionStatuses(originalTransactionId)
     if (!result?.data) {
@@ -54,8 +54,18 @@ async function reconcileIosUser({userId, hash, originalTransactionId, productId}
       return {status: 'ok', reason: 'still_active'}
     }
 
+    const statuses = allTransactions.map(t => t.status).join(',')
+
+    if (dryRun) {
+      logger.warn(
+        {userId, originalTransactionId, productId, statuses},
+        '[DRY-RUN] reconcile iOS: zumbi detectado — Plus SERIA desligado',
+      )
+      return {status: 'would_deactivate'}
+    }
+
     logger.warn(
-      {userId, originalTransactionId, productId, statuses: allTransactions.map(t => t.status)},
+      {userId, originalTransactionId, productId, statuses},
       'reconcile iOS: zumbi detectado — desligando Plus',
     )
     await deactivatePlus({
@@ -67,7 +77,7 @@ async function reconcileIosUser({userId, hash, originalTransactionId, productId}
     const userLabel = await formatUserLabel(userId)
     discordAlert(
       `[HUNTER PLUS] 🧟 Zumbi iOS detectado (**${userLabel}**, original tx \`${originalTransactionId}\`). ` +
-        `Statuses Apple: ${allTransactions.map(t => t.status).join(',')}. Plus desligado.`,
+        `Statuses Apple: ${statuses}. Plus desligado.`,
     ).catch(() => {})
     return {status: 'deactivated'}
   } catch (err) {
@@ -76,7 +86,7 @@ async function reconcileIosUser({userId, hash, originalTransactionId, productId}
   }
 }
 
-async function reconcileStripeUser({userId, hash, stripeCustomerId, purchaseToken}) {
+async function reconcileStripeUser({userId, hash, stripeCustomerId, purchaseToken}, {dryRun = false} = {}) {
   try {
     const subs = await stripe.subscriptions.list({
       customer: stripeCustomerId,
@@ -99,6 +109,14 @@ async function reconcileStripeUser({userId, hash, stripeCustomerId, purchaseToke
     )
     if (stillEligible) {
       return {status: 'ok', reason: 'trialing_or_past_due'}
+    }
+
+    if (dryRun) {
+      logger.warn(
+        {userId, stripeCustomerId},
+        '[DRY-RUN] reconcile Stripe: zumbi detectado — Plus SERIA desligado',
+      )
+      return {status: 'would_deactivate'}
     }
 
     logger.warn(
@@ -126,17 +144,25 @@ async function reconcileStripeUser({userId, hash, stripeCustomerId, purchaseToke
 /**
  * Roda 1 ciclo de reconciliação. Idempotente (chamar 2x não dobra
  * efeito porque deactivatePlus é idempotente).
+ *
+ * @param {object} [opts]
+ * @param {boolean} [opts.dryRun] — se true, consulta Apple/Stripe normalmente
+ *   mas NÃO chama deactivatePlus. Útil pra rodar à mão e ver quantos zumbis
+ *   seriam detectados sem efeito colateral. Skipa alertas individuais no
+ *   Discord (manda só o sumário final, prefixado).
  */
-export async function runReconciliation() {
+export async function runReconciliation({dryRun = false} = {}) {
   const startedAt = Date.now()
-  logger.info('[reconcile] iniciando reconciliação diária')
+  logger.info({dryRun}, dryRun ? '[reconcile] iniciando DRY-RUN' : '[reconcile] iniciando reconciliação diária')
 
   const stats = {
     iosTotal: 0,
     iosDeactivated: 0,
+    iosWouldDeactivate: 0,
     iosErrors: 0,
     stripeTotal: 0,
     stripeDeactivated: 0,
+    stripeWouldDeactivate: 0,
     stripeErrors: 0,
   }
 
@@ -145,8 +171,9 @@ export async function runReconciliation() {
     const iosUsers = await listIosPlusUsers(5000)
     stats.iosTotal = iosUsers.length
     for (const user of iosUsers) {
-      const res = await reconcileIosUser(user)
+      const res = await reconcileIosUser(user, {dryRun})
       if (res.status === 'deactivated') stats.iosDeactivated++
+      else if (res.status === 'would_deactivate') stats.iosWouldDeactivate++
       else if (res.status === 'error') stats.iosErrors++
     }
   } catch (err) {
@@ -158,8 +185,9 @@ export async function runReconciliation() {
     const stripeUsers = await listStripePlusUsers(5000)
     stats.stripeTotal = stripeUsers.length
     for (const user of stripeUsers) {
-      const res = await reconcileStripeUser(user)
+      const res = await reconcileStripeUser(user, {dryRun})
       if (res.status === 'deactivated') stats.stripeDeactivated++
+      else if (res.status === 'would_deactivate') stats.stripeWouldDeactivate++
       else if (res.status === 'error') stats.stripeErrors++
     }
   } catch (err) {
@@ -167,14 +195,23 @@ export async function runReconciliation() {
   }
 
   const durationMs = Date.now() - startedAt
-  logger.info({...stats, durationMs}, '[reconcile] concluído')
+  logger.info({...stats, durationMs, dryRun}, '[reconcile] concluído')
 
-  // Sumário no Discord se houve mexida ou erros
-  if (stats.iosDeactivated + stats.stripeDeactivated + stats.iosErrors + stats.stripeErrors > 0) {
+  // Sumário no Discord se houve mexida (ou simulação de mexida) ou erros.
+  // Em dry-run não dispara alertas individuais — só o sumário com prefixo.
+  const totalToReport = dryRun
+    ? stats.iosWouldDeactivate + stats.stripeWouldDeactivate + stats.iosErrors + stats.stripeErrors
+    : stats.iosDeactivated + stats.stripeDeactivated + stats.iosErrors + stats.stripeErrors
+
+  if (totalToReport > 0) {
+    const prefix = dryRun ? '🧪 DRY-RUN — ' : ''
+    const verb = dryRun ? 'SERIAM desligados' : 'desligados'
+    const iosCount = dryRun ? stats.iosWouldDeactivate : stats.iosDeactivated
+    const stripeCount = dryRun ? stats.stripeWouldDeactivate : stats.stripeDeactivated
     discordAlert(
-      `[HUNTER PLUS] 📊 Reconciliação diária:\n` +
-        `iOS: ${stats.iosTotal} verificados, **${stats.iosDeactivated}** zumbis desligados, ${stats.iosErrors} erros.\n` +
-        `Stripe: ${stats.stripeTotal} verificados, **${stats.stripeDeactivated}** zumbis desligados, ${stats.stripeErrors} erros.\n` +
+      `[HUNTER PLUS] ${prefix}📊 Reconciliação diária:\n` +
+        `iOS: ${stats.iosTotal} verificados, **${iosCount}** zumbis ${verb}, ${stats.iosErrors} erros.\n` +
+        `Stripe: ${stats.stripeTotal} verificados, **${stripeCount}** zumbis ${verb}, ${stats.stripeErrors} erros.\n` +
         `Duração: ${(durationMs / 1000).toFixed(1)}s`,
     ).catch(() => {})
   }
