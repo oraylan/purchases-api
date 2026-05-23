@@ -54,10 +54,14 @@ export async function createApp() {
 
   // Log compacto estilo nginx/morgan — uma linha por request.
   // Skipa /ping e /health pra não poluir (loadbalancer bate sempre).
+  // Skipa 404 — endpoint público recebe scan automatizado constante
+  // (.env, secrets.yml, /@fs/etc/passwd, etc); todos respondem 404 e
+  // só poluem o log sem agregar nada.
   app.addHook('onResponse', async (req, reply) => {
     if (req.url === '/ping' || req.url === '/health') return
-    const ms = Number(reply.elapsedTime).toFixed(0)
     const status = reply.statusCode
+    if (status === 404) return
+    const ms = Number(reply.elapsedTime).toFixed(0)
     const line = `${req.method} ${req.url} ${status} ${ms}ms`
     if (status >= 500) req.log.error(line)
     else if (status >= 400) req.log.warn(line)
