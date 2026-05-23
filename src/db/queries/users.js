@@ -100,28 +100,43 @@ export async function deactivatePremium(userId) {
 
 /**
  * Verifica se o user tem uma assinatura mais recente que `currentToken`.
- * Usado pelo `removePremium` pra NÃO desligar Plus quando há renovação
+ * Usado pelo `deactivatePlus` pra NÃO desligar Plus quando há renovação
  * mais nova que apenas a antiga expirou (cenário comum: DID_RENEW
  * chega ANTES do EXPIRED da renovação anterior).
+ *
+ * Duas sutilezas herdadas de bug histórico da apiv2:
+ *   1) ORDER BY purchase_time DESC — quando uma sub renova, surgem várias
+ *      linhas com o mesmo purchase_token. Sem ORDER BY, o MySQL retorna
+ *      ordem indefinida (geralmente a mais antiga, por ordem do clustered
+ *      index), o que inflava a janela "mais novo que X" e deixava subs
+ *      antigas/expiradas passarem.
+ *   2) expiry_time > nowMs — exige que a sub mais nova esteja VIGENTE.
+ *      Sem isso, uma sub mais nova já expirada continuava blindando o
+ *      Plus contra remoção (assinatura zumbi imune ao reconcile).
  *
  * @returns {Promise<boolean>}
  */
 export async function hasNewerSubscription(userId, currentToken) {
   const [current] = await pool.query(
-    'SELECT purchase_time FROM user_plus WHERE user_id = ? AND purchase_token = ? LIMIT 1',
+    `SELECT purchase_time FROM user_plus
+       WHERE user_id = ? AND purchase_token = ?
+       ORDER BY purchase_time DESC
+       LIMIT 1`,
     [userId, currentToken],
   )
   if (current.length === 0) return false
 
   const currentPurchaseTime = current[0].purchase_time
+  const nowMs = Date.now()
   const [newer] = await pool.query(
     `SELECT 1 FROM user_plus
        WHERE user_id = ?
          AND purchase_token != ?
          AND purchase_time > ?
+         AND expiry_time > ?
          AND (oneTime_expired IS NULL OR oneTime_expired != 1)
        LIMIT 1`,
-    [userId, currentToken, currentPurchaseTime],
+    [userId, currentToken, currentPurchaseTime, nowMs],
   )
   return newer.length > 0
 }
