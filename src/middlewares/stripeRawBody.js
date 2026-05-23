@@ -4,8 +4,8 @@
 // o raw Buffer — necessário pra validar a assinatura HMAC do webhook
 // Stripe (que assina o byte exato do corpo).
 //
-// Aplicado SÓ no scope do plugin Stripe — registrado em `routes/notifications/stripe.js`
-// via `app.register(stripeWebhookPlugin, { prefix: '/stripeNotification' })`.
+// Aplicado SÓ no scope do plugin Stripe — registrado em `routes/webhooks/stripe.js`
+// via `app.register(stripeWebhookPlugin, { prefix: '/webhooks/stripe' })`.
 // Fora desse scope, o resto da app usa o express.json() padrão.
 
 export async function stripeRawBodyPlugin(app) {

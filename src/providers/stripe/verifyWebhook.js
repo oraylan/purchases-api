@@ -3,7 +3,7 @@
 // Valida a assinatura HMAC do webhook Stripe. CRÍTICO: sem isso, qualquer
 // um que descubra a URL pode forjar eventos.
 //
-// Usado pelo handler de /stripeNotification — precisa do raw body (não
+// Usado pelo handler de /webhooks/stripe — precisa do raw body (não
 // JSON-parsed) pra calcular o HMAC. Por isso o Fastify registra a rota
 // com contentTypeParser próprio que preserva o buffer.
 import {stripe} from './client.js'

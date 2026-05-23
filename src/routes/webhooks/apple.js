@@ -1,6 +1,6 @@
-// src/routes/notifications/apple.js
+// src/routes/webhooks/apple.js
 //
-// POST /purchaseNotification — webhook ASN V2 da Apple. Apple manda
+// POST /webhooks/apple — webhook ASN V2 da Apple. Apple manda
 // eventos do ciclo de vida das subs em formato JWS. Aqui validamos
 // assinatura, decodificamos e roteamos pro handler de domínio.
 //
@@ -18,9 +18,9 @@ const appleNotificationSchema = {
   additionalProperties: true,
 }
 
-export async function appleNotificationRoutes(app) {
+export async function appleWebhookRoutes(app) {
   app.post(
-    '/purchaseNotification',
+    '/webhooks/apple',
     {
       schema: {body: appleNotificationSchema},
     },

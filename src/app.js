@@ -12,7 +12,7 @@
 //   - `@fastify/sensible` — adiciona `reply.notFound()`, `httpErrors`,
 //     etc. Reduz boilerplate em handlers.
 //
-// O webhook do Stripe (`/stripeNotification`) precisa de raw body pra
+// O webhook do Stripe (`/webhooks/stripe`) precisa de raw body pra
 // validar a assinatura HMAC. Vamos registrar um contentTypeParser
 // específico pra essa rota na Fase 4 — Fastify aceita parser por
 // rota via `config: {rawBody: true}` + addContentTypeParser global,
@@ -25,8 +25,8 @@ import {purchaseRoutes} from './routes/purchase.js'
 import {platformRoutes} from './routes/platform.js'
 import {checkoutStatusRoutes} from './routes/checkoutStatus.js'
 import {stripeCheckoutRoutes} from './routes/stripeCheckout.js'
-import {appleNotificationRoutes} from './routes/notifications/apple.js'
-import {stripeNotificationPlugin} from './routes/notifications/stripe.js'
+import {appleWebhookRoutes} from './routes/webhooks/apple.js'
+import {stripeWebhookPlugin} from './routes/webhooks/stripe.js'
 import {adminRoutes} from './routes/admin.js'
 
 export async function createApp() {
@@ -72,7 +72,7 @@ export async function createApp() {
   // troca o contentTypeParser de JSON pra buffer (raw body é exigido
   // pra validar HMAC). Fastify isola contentTypeParser por scope de
   // plugin — outras rotas continuam parseando JSON normal.
-  await app.register(stripeNotificationPlugin)
+  await app.register(stripeWebhookPlugin)
 
   // Rotas com parser JSON padrão
   await app.register(healthcheckRoutes)
@@ -80,7 +80,7 @@ export async function createApp() {
   await app.register(platformRoutes)
   await app.register(checkoutStatusRoutes)
   await app.register(stripeCheckoutRoutes)
-  await app.register(appleNotificationRoutes)
+  await app.register(appleWebhookRoutes)
   await app.register(adminRoutes)
 
   // Error handler global — qualquer throw em handler async cai aqui.

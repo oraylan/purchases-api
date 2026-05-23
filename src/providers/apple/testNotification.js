@@ -4,7 +4,7 @@
 // configurado em App Store Connect. Usado pelo endpoint /admin/asn-test
 // pra confirmar que a infra Apple → webhook está roteando direito.
 //
-// A Apple manda em segundos. O payload chega no /purchaseNotification
+// A Apple manda em segundos. O payload chega no /webhooks/apple
 // com notificationType='TEST' e contém testNotificationToken — útil
 // pra cruzar com o token devolvido aqui.
 import {getAppStoreClient} from './client.js'

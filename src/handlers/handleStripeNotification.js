@@ -1,6 +1,6 @@
 // src/handlers/handleStripeNotification.js
 //
-// Webhook handler do /stripeNotification. Stripe manda eventos de:
+// Webhook handler do /webhooks/stripe. Stripe manda eventos de:
 //   - checkout.session.completed       → ativa Plus
 //   - invoice.paid                     → renova expiry + reativa se preciso
 //   - invoice.payment_failed           → desativa Plus

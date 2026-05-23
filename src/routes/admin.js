@@ -1,7 +1,7 @@
 // src/routes/admin.js
 //
 // POST /admin/asn-test — pede pra Apple disparar uma notificação de
-// teste pra confirmar que o webhook /purchaseNotification está
+// teste pra confirmar que o webhook /webhooks/apple está
 // acessível. Apple posta em ~5s. Cruzar o `testNotificationToken`
 // devolvido aqui com o que aparece nos logs do webhook.
 import {requireAdminToken} from '../middlewares/requireAdminToken.js'
@@ -30,7 +30,7 @@ export async function adminRoutes(app) {
           success: true,
           env,
           testNotificationToken: result.testNotificationToken,
-          message: 'Apple vai postar em /purchaseNotification em ~5s.',
+          message: 'Apple vai postar em /webhooks/apple em ~5s.',
         }
       } catch (err) {
         req.log.error({err: err.message}, '[admin] falha ao pedir ASN de teste')

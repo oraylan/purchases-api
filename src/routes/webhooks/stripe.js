@@ -1,6 +1,6 @@
-// src/routes/notifications/stripe.js
+// src/routes/webhooks/stripe.js
 //
-// POST /stripeNotification — webhook Stripe. Recebe raw buffer
+// POST /webhooks/stripe — webhook Stripe. Recebe raw buffer
 // (necessário pra validar assinatura HMAC), valida com a lib, e
 // despacha pro handler de domínio.
 //
@@ -43,7 +43,7 @@ async function stripeWebhookHandler(req, reply) {
   return reply.status(200).send('ok')
 }
 
-export async function stripeNotificationPlugin(app) {
+export async function stripeWebhookPlugin(app) {
   await app.register(stripeRawBodyPlugin)
-  app.post('/stripeNotification', stripeWebhookHandler)
+  app.post('/webhooks/stripe', stripeWebhookHandler)
 }

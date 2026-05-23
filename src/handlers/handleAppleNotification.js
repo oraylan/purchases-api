@@ -1,6 +1,6 @@
 // src/handlers/handleAppleNotification.js
 //
-// Webhook handler do /purchaseNotification (App Store Server
+// Webhook handler do /webhooks/apple (App Store Server
 // Notifications V2). Apple manda eventos do ciclo de vida das subs
 // (DID_RENEW, EXPIRED, REFUND, GRACE_PERIOD_EXPIRED, REVOKE, etc).
 //
@@ -45,7 +45,7 @@ export async function handleAppleNotification(req, reply) {
 
   logger.info(
     {ip: req.ip, hasPayload: !!signedPayload, payloadLen: signedPayload?.length || 0},
-    '[ASN] /purchaseNotification HIT',
+    '[ASN] /webhooks/apple HIT',
   )
 
   if (!signedPayload) {
@@ -63,7 +63,7 @@ export async function handleAppleNotification(req, reply) {
       // pra Apple retentar — não foi a Apple que mandou).
       logger.error({err: err.message, ip: req.ip}, '[ASN] JWS inválido — possível tentativa de forjar evento')
       discordAlert(
-        `[HUNTER PLUS] 🚨 /purchaseNotification recebeu signedPayload INVÁLIDO. IP: \`${req.ip}\`. ` +
+        `[HUNTER PLUS] 🚨 /webhooks/apple recebeu signedPayload INVÁLIDO. IP: \`${req.ip}\`. ` +
           `Possível tentativa de forjar evento.`,
       ).catch(() => {})
       return reply.status(200).send('ok')

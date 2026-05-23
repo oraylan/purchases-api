@@ -9,8 +9,8 @@ API dedicada a compras da Hunter.FM. Substitui a parte de purchases que vivia na
 | Validação de compra iOS (StoreKit 2 / JWS)                 | `POST /purchase/v3`                   |
 | Validação de compra Android (Google Play Billing inicial)  | `POST /purchase/v3`                   |
 | Checkout Stripe (web)                                      | `POST /checkout`, `/checkout/portal`  |
-| Webhook Apple ASN V2 (sandbox + produção)                  | `POST /purchaseNotification`          |
-| Webhook Stripe                                             | `POST /stripeNotification`            |
+| Webhook Apple ASN V2 (sandbox + produção)                  | `POST /webhooks/apple`                |
+| Webhook Stripe                                             | `POST /webhooks/stripe`               |
 | Consulta de plataforma e status Plus                       | `GET /plus/platform/:hashUser`        |
 | Consulta de status Plus                                    | `GET /checkout/:hashUser`             |
 | Admin: solicitar ASN de teste à Apple                      | `POST /admin/asn-test`                |

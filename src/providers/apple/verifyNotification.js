@@ -1,7 +1,7 @@
 // src/providers/apple/verifyNotification.js
 //
 // Valida + decodifica um JWS de App Store Server Notification V2 (webhook
-// `/purchaseNotification`). Substitui o `jwt.decode(...)` inseguro da apiv2
+// `/webhooks/apple`). Substitui o `jwt.decode(...)` inseguro da apiv2
 // — sem validação de assinatura qualquer ator que descubra a URL poderia
 // forjar eventos (sabotagem, fraude).
 //
