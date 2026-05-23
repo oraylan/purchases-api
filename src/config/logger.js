@@ -29,7 +29,7 @@ export const loggerConfig = {
     target: 'pino-pretty',
     options: {
       colorize: isDev,
-      translateTime: 'SYS:HH:MM:ss',
+      translateTime: 'SYS:dd/mm/yyyy HH:MM:ss',
       ignore: 'pid,hostname',
       singleLine: false,
     },
