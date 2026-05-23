@@ -70,8 +70,24 @@ yarn dev                   # com nodemon
 ## Produção (pm2)
 
 ```
-yarn pm2:start
-yarn pm2:logs
+yarn pm2:start                 # sobe (1ª vez)
+yarn pm2:reload                # reload graceful (após git pull)
+```
+
+## Lendo os logs
+
+Os logs em produção são **pino JSON estruturado** — bom pra ingestion em ferramentas (Datadog, Loki, etc), ruim pra leitura humana. 3 jeitos:
+
+```
+yarn logs              # pm2 logs (últimas 100 linhas) + pretty-print
+yarn logs:tail         # tail -f no arquivo do pm2 + pretty-print (acompanhar ao vivo)
+yarn pm2:logs          # raw JSON (pra grep/jq/etc)
+```
+
+Exemplo de grep estruturado com `jq`:
+```
+pm2 logs purchases-api --raw --nostream | jq 'select(.level >= 40)'   # warns+errors
+pm2 logs purchases-api --raw --nostream | jq 'select(.reqId == "req-42")'
 ```
 
 ## Banco de dados
