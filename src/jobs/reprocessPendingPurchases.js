@@ -49,7 +49,8 @@ async function reprocessOne({token, productId, userId, userHash}) {
     await setPurchaseStatus(token, 0)
     await activatePlus({userId, userHash, source: 'pix_cron', productId})
     logger.info({userId, productId, orderId: result.orderId}, '[pix-cron] PIX confirmado — Plus ativado')
-    discordAlert(`[HUNTER PLUS] ✅ PIX confirmado userId **${userId}** produto **${productId}**`).catch(() => {})
+    const userLabel = await formatUserLabel(userId)
+    discordAlert(`[HUNTER PLUS] ✅ PIX confirmado **${userLabel}** produto **${productId}**`).catch(() => {})
     return
   }
 
@@ -70,6 +71,7 @@ async function reprocessOne({token, productId, userId, userHash}) {
       body: 'Sua compra foi cancelada e o Hunter Plus não foi ativado. Confira no Google Play e tente novamente.',
     }).catch(() => {})
   }
-  discordAlert(`[HUNTER PLUS] ❌ PIX cancelado userId **${userId}** produto **${productId}**`).catch(() => {})
+  const userLabel = await formatUserLabel(userId, user)
+  discordAlert(`[HUNTER PLUS] ❌ PIX cancelado **${userLabel}** produto **${productId}**`).catch(() => {})
   logger.warn({userId, productId}, '[pix-cron] PIX cancelado')
 }

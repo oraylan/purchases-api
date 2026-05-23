@@ -21,6 +21,7 @@ import {removePremiumPg} from '../db/pgQueries.js'
 import {notifyPlusDeactivated} from '../comms/notify.js'
 import {discordAlert} from '../comms/discord.js'
 import {logger} from '../config/logger.js'
+import {formatUserLabel} from '../utils/userLabel.js'
 
 /**
  * Desativa Plus de um user. Aceita 2 modos:
@@ -56,8 +57,9 @@ export async function deactivatePlus({
     const hasNewer = await hasNewerSubscription(userId, purchaseToken)
     if (hasNewer) {
       logger.info({userId, source}, 'deactivatePlus: user tem sub mais nova, mantendo Plus')
+      const userLabel = await formatUserLabel(userId)
       discordAlert(
-        `[HUNTER PLUS] ⚠️ Tentativa de remoção do Plus (userId **${userId}**, source **${source}**), ` +
+        `[HUNTER PLUS] ⚠️ Tentativa de remoção do Plus (**${userLabel}**, source **${source}**), ` +
           `mas há assinatura mais nova vigente — mantido.`,
       ).catch(() => {})
       return {deactivated: false, reason: 'has_newer_subscription'}
@@ -88,8 +90,9 @@ export async function deactivatePlus({
     }
   }
 
+  const userLabel = await formatUserLabel(userId, user)
   discordAlert(
-    `[HUNTER PLUS] ❌ Plus desativado para userId **${userId}** via **${source}**`,
+    `[HUNTER PLUS] ❌ Plus desativado para **${userLabel}** via **${source}**`,
   ).catch(() => {})
 
   return {deactivated: true}

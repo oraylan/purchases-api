@@ -19,6 +19,7 @@ import {addPremiumPg} from '../db/pgQueries.js'
 import {notifyPlusActivated} from '../comms/notify.js'
 import {discordAlert} from '../comms/discord.js'
 import {logger} from '../config/logger.js'
+import {formatUserLabel} from '../utils/userLabel.js'
 
 /**
  * Ativa Plus pra um user. Idempotente.
@@ -53,8 +54,9 @@ export async function activatePlus({userId, userHash, source, productId, notifyU
 
   // Alerta Discord sempre (mesmo em ativação repetida — auditoria).
   const verb = wasAlreadyPlus ? '🔁 Re-confirmado' : '✅ Ativado'
+  const userLabel = await formatUserLabel(userId)
   discordAlert(
-    `[HUNTER PLUS] ${verb} Plus para userId **${userId}** via **${source}**` +
+    `[HUNTER PLUS] ${verb} Plus para **${userLabel}** via **${source}**` +
       (productId ? ` (produto: ${productId})` : ''),
   ).catch(() => {})
 

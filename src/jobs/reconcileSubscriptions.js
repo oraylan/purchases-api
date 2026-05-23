@@ -18,6 +18,7 @@ import {getSubscriptionStatuses} from '../providers/apple/subscriptionStatus.js'
 import {stripe} from '../providers/stripe/client.js'
 import {deactivatePlus} from '../handlers/deactivatePlus.js'
 import {discordAlert} from '../comms/discord.js'
+import {formatUserLabel} from '../utils/userLabel.js'
 
 /**
  * Apple subscription status codes (App Store Server API):
@@ -63,8 +64,9 @@ async function reconcileIosUser({userId, hash, originalTransactionId, productId}
       source: 'reconcile_apple',
       notifyUser: false, // user já deveria saber (sub expirou semanas atrás)
     })
+    const userLabel = await formatUserLabel(userId)
     discordAlert(
-      `[HUNTER PLUS] 🧟 Zumbi iOS detectado (userId **${userId}**, original tx \`${originalTransactionId}\`). ` +
+      `[HUNTER PLUS] 🧟 Zumbi iOS detectado (**${userLabel}**, original tx \`${originalTransactionId}\`). ` +
         `Statuses Apple: ${allTransactions.map(t => t.status).join(',')}. Plus desligado.`,
     ).catch(() => {})
     return {status: 'deactivated'}
@@ -109,8 +111,9 @@ async function reconcileStripeUser({userId, hash, stripeCustomerId, purchaseToke
       source: 'reconcile_stripe',
       notifyUser: false,
     })
+    const userLabel = await formatUserLabel(userId)
     discordAlert(
-      `[HUNTER PLUS] 🧟 Zumbi Stripe detectado (userId **${userId}**, customer \`${stripeCustomerId}\`). ` +
+      `[HUNTER PLUS] 🧟 Zumbi Stripe detectado (**${userLabel}**, customer \`${stripeCustomerId}\`). ` +
         `Sem subs ativas. Plus desligado.`,
     ).catch(() => {})
     return {status: 'deactivated'}
