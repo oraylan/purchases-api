@@ -145,12 +145,13 @@ async function auditStripeUser(row) {
   }
 }
 
+const BR_TZ = 'America/Sao_Paulo'
+
 function fmtTs(ms) {
   if (!ms) return '—'
   const n = Number(ms)
   if (!Number.isFinite(n) || n <= 0) return '—'
-  const d = new Date(n)
-  return d.toISOString().slice(0, 10) // YYYY-MM-DD
+  return new Date(n).toLocaleDateString('pt-BR', {timeZone: BR_TZ})
 }
 
 function fmtDateCreate(dc) {
@@ -158,7 +159,18 @@ function fmtDateCreate(dc) {
   // mysql2 devolve Date object; pode vir string também
   const d = dc instanceof Date ? dc : new Date(dc)
   if (Number.isNaN(d.getTime())) return '—'
-  return d.toISOString().slice(0, 10)
+  return d.toLocaleDateString('pt-BR', {timeZone: BR_TZ})
+}
+
+function fmtReportTimestamp() {
+  return new Date().toLocaleString('pt-BR', {
+    timeZone: BR_TZ,
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 function fmtUserHeader(z) {
@@ -198,7 +210,7 @@ const DISCORD_MSG_LIMIT = 1900 // margem do limite de 2000
  */
 async function sendReport({stats, iosZumbis, stripeZumbis, durationMs}) {
   const header =
-    `[HUNTER PLUS] 📊 Relatório anti-zumbi (${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC)\n` +
+    `[HUNTER PLUS] 📊 Relatório anti-zumbi (${fmtReportTimestamp()} BRT)\n` +
     '```\n' +
     `iOS:    ${String(stats.iosTotal).padStart(4)} verificados | ${String(stats.iosProtected).padStart(4)} protegidos | ${String(stats.iosErrors).padStart(2)} erros | ${stats.iosZumbis} zumbis\n` +
     `Stripe: ${String(stats.stripeTotal).padStart(4)} verificados | ${String(stats.stripeProtected).padStart(4)} protegidos | ${String(stats.stripeErrors).padStart(2)} erros | ${stats.stripeZumbis} zumbis\n` +
