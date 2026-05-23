@@ -15,7 +15,6 @@
     "pm2:reload": "pm2 reload ecosystem.config.cjs",
     "pm2:logs": "pm2 logs purchases-api",
     "reconcile:dry": "node scripts/reconcile-dry-run.js",
-    "reconcile:run": "node scripts/reconcile-dry-run.js --for-real",
     "lint": "echo \"(sem lint configurado por enquanto)\""
   },
   "dependencies": {
