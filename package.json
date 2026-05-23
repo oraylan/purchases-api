@@ -1,0 +1,39 @@
+{
+  "name": "purchases-api",
+  "version": "1.0.0",
+  "description": "Hunter.FM purchases API — IAP (Apple/Google), Stripe checkout, webhooks ASN V2 e reconciliação. ES modules.",
+  "type": "module",
+  "main": "src/index.js",
+  "private": true,
+  "engines": {
+    "node": ">=20.12"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon --watch src --ext js src/index.js",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
+    "pm2:reload": "pm2 reload ecosystem.config.cjs",
+    "pm2:logs": "pm2 logs purchases-api",
+    "lint": "echo \"(sem lint configurado por enquanto)\""
+  },
+  "dependencies": {
+    "@apple/app-store-server-library": "^3.1.0",
+    "@fastify/sensible": "^6.0.1",
+    "axios": "^1.7.9",
+    "discord.js": "^14.18.0",
+    "dotenv": "^16.4.7",
+    "fastify": "^5.2.0",
+    "googleapis": "^134.0.0",
+    "mysql2": "^3.9.4",
+    "node-cron": "^4.2.1",
+    "pg": "^8.11.5",
+    "pino": "^9.5.0",
+    "pino-pretty": "^11.3.0",
+    "stripe": "^18.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  },
+  "author": "HUNTER MIDIA LTDA",
+  "license": "ISC"
+}

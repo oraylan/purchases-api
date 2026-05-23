@@ -1,0 +1,18 @@
+node_modules/
+.env
+.env.local
+.secrets/
+*.log
+logs/
+.DS_Store
+.idea/
+.vscode/
+
+# Yarn 4 (não commitar cache local nem install state)
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
