@@ -11,6 +11,7 @@
 import {env} from './config/env.js'
 import {logger} from './config/logger.js'
 import {createApp} from './app.js'
+import {registerJobs} from './jobs/index.js'
 
 const app = await createApp()
 
@@ -20,6 +21,7 @@ try {
     {port: env.port, env: env.nodeEnv, appleEnv: env.apple.env},
     'purchases-api online',
   )
+  registerJobs()
 } catch (err) {
   logger.fatal({err}, 'falha ao subir servidor')
   process.exit(1)
