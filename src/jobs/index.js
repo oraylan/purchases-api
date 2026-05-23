@@ -9,6 +9,7 @@
 import cron from 'node-cron'
 import {logger} from '../config/logger.js'
 import {runReconciliation} from './reconcileSubscriptions.js'
+import {reprocessPendingPurchases} from './reprocessPendingPurchases.js'
 
 const TIMEZONE = 'America/Sao_Paulo'
 
@@ -24,4 +25,18 @@ export function registerJobs() {
     {timezone: TIMEZONE},
   )
   logger.info({tz: TIMEZONE}, 'cron de reconciliação registrado (04:00 BRT diário)')
+
+  // PIX pending reprocess: cada minuto. Re-valida compras one-time
+  // Android que ficaram em pending=1 no banco. Portado da apiv2 em
+  // 2026-05-23 (apiv2 não tem mais esse cron).
+  cron.schedule(
+    '* * * * *',
+    () => {
+      reprocessPendingPurchases().catch(err => {
+        logger.error({err: err?.message}, 'reprocessPendingPurchases falhou')
+      })
+    },
+    {timezone: TIMEZONE},
+  )
+  logger.info({tz: TIMEZONE}, 'cron de PIX pending registrado (1x/min)')
 }
