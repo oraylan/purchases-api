@@ -25,13 +25,11 @@ const readyPromise = new Promise(resolve => {
   readyResolve = resolve
 })
 
+// `clientReady` é o novo nome do evento (discord.js v15+). O v14 ainda
+// emite `ready` em paralelo, mas registrar o listener de `ready` dispara
+// DeprecationWarning. Só `clientReady` é suficiente no v14.
 client.once('clientReady', () => {
   logger.info({tag: client.user?.tag}, 'discord ready')
-  readyResolve()
-})
-// Fallback pra versões antigas que ainda emitem `ready`
-client.once('ready', () => {
-  logger.info({tag: client.user?.tag}, 'discord ready (legacy event)')
   readyResolve()
 })
 
