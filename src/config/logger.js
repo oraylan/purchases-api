@@ -10,24 +10,30 @@
 import pino from 'pino'
 import {env} from './env.js'
 
+/**
+ * Config base que vai pro logger standalone E pro Fastify. Sempre
+ * pretty-printed (mesmo em produção) — fica legível direto no
+ * `pm2 log` sem precisar pipe externo. Trade-off conhecido: perde
+ * estrutura JSON pra ferramentas tipo Datadog/Loki, mas pra esse
+ * serviço (sem stack de observabilidade externa) o ganho de
+ * legibilidade compensa.
+ *
+ * `colorize: false` em produção porque pm2 escreve em arquivo (sem
+ * TTY) — códigos ANSI viram lixo no arquivo. Em dev (com TTY) liga.
+ */
 const isDev = env.nodeEnv !== 'production'
 
-/**
- * Config base que vai pro logger standalone E pro Fastify. Manter um
- * único formato facilita correlacionar logs entre rotas e jobs.
- */
 export const loggerConfig = {
   level: env.logLevel,
-  ...(isDev && {
-    transport: {
-      target: 'pino-pretty',
-      options: {
-        colorize: true,
-        translateTime: 'HH:MM:ss',
-        ignore: 'pid,hostname',
-      },
+  transport: {
+    target: 'pino-pretty',
+    options: {
+      colorize: isDev,
+      translateTime: 'SYS:HH:MM:ss',
+      ignore: 'pid,hostname',
+      singleLine: false,
     },
-  }),
+  },
   base: undefined,
 }
 

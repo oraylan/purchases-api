@@ -76,19 +76,26 @@ yarn pm2:reload                # reload graceful (após git pull)
 
 ## Lendo os logs
 
-Os logs em produção são **pino JSON estruturado** — bom pra ingestion em ferramentas (Datadog, Loki, etc), ruim pra leitura humana. 3 jeitos:
+Pino com pino-pretty integrado — logs saem já formatados (linha por request estilo nginx) direto no `pm2 log`:
 
 ```
-yarn logs              # pm2 logs (últimas 100 linhas) + pretty-print
-yarn logs:tail         # tail -f no arquivo do pm2 + pretty-print (acompanhar ao vivo)
-yarn pm2:logs          # raw JSON (pra grep/jq/etc)
+pm2 log purchases-api
+# ou
+yarn pm2:logs
 ```
 
-Exemplo de grep estruturado com `jq`:
+Exemplo:
 ```
-pm2 logs purchases-api --raw --nostream | jq 'select(.level >= 40)'   # warns+errors
-pm2 logs purchases-api --raw --nostream | jq 'select(.reqId == "req-42")'
+22:33:35 INFO: POST /purchase/v3 200 1490ms
+22:33:35 INFO: recebendo compra
+    userId: 19558
+    platform: "ios"
+    orderId: "2000001175711723"
+22:33:35 INFO: GET /checkout/lnj00dub-rieidtni-wlrufmccnn 200 9ms
+22:33:39 WARN: POST /purchase/v3 400 8ms
 ```
+
+Skipa logs de `/ping` e `/health` (loadbalancer poluiria).
 
 ## Banco de dados
 

@@ -34,21 +34,34 @@ export async function createApp() {
     logger: loggerConfig,
     bodyLimit: 1024 * 1024, // 1 MB
     trustProxy: true,
-    disableRequestLogging: false,
+    // Desliga o log automático "incoming request" + "request completed"
+    // do Fastify. Em vez disso, um hook onResponse compacto loga uma
+    // ÚNICA linha por request: `METHOD PATH STATUS Xms`. Muito mais
+    // legível, estilo nginx/morgan.
+    disableRequestLogging: true,
     routerOptions: {
       ignoreTrailingSlash: true,
     },
-    // Ajv: permitir union types nos schemas (ex: {type: ['string', 'null']}).
-    // Default do Ajv strict reclama disso, mas pra requests vindos do app
-    // alguns campos legitimamente são opcionais/null em diferentes versões.
     ajv: {
       customOptions: {
         allowUnionTypes: true,
-        coerceTypes: 'array', // converte string→number quando faz sentido
+        coerceTypes: 'array',
         useDefaults: true,
         removeAdditional: false,
       },
     },
+  })
+
+  // Log compacto estilo nginx/morgan — uma linha por request.
+  // Skipa /ping e /health pra não poluir (loadbalancer bate sempre).
+  app.addHook('onResponse', async (req, reply) => {
+    if (req.url === '/ping' || req.url === '/health') return
+    const ms = Number(reply.elapsedTime).toFixed(0)
+    const status = reply.statusCode
+    const line = `${req.method} ${req.url} ${status} ${ms}ms`
+    if (status >= 500) req.log.error(line)
+    else if (status >= 400) req.log.warn(line)
+    else req.log.info(line)
   })
 
   // Plugins utilitários — pequenos helpers (reply.notFound, httpErrors,
