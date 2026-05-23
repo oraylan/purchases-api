@@ -20,7 +20,7 @@ export async function findUserIdByHash(hash) {
 /** Resolve hash → user.id e user.hash em um único trip ao banco. */
 export async function findUserByHash(hash) {
   const [results] = await pool.query(
-    'SELECT id, hash, fullname, email FROM user WHERE hash = ? LIMIT 1',
+    'SELECT id, hash, fullname, mail FROM user WHERE hash = ? LIMIT 1',
     [hash],
   )
   return results[0] ?? null
@@ -29,7 +29,7 @@ export async function findUserByHash(hash) {
 /** Resolve id → user info básico (pra alertas e emails). */
 export async function getUserInfoById(userId) {
   const [results] = await pool.query(
-    'SELECT id, hash, fullname, email FROM user WHERE id = ? LIMIT 1',
+    'SELECT id, hash, fullname, mail FROM user WHERE id = ? LIMIT 1',
     [userId],
   )
   return results[0] ?? null
