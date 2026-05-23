@@ -21,6 +21,13 @@ import Fastify from 'fastify'
 import sensible from '@fastify/sensible'
 import {loggerConfig} from './config/logger.js'
 import {healthcheckRoutes} from './routes/healthcheck.js'
+import {purchaseRoutes} from './routes/purchase.js'
+import {platformRoutes} from './routes/platform.js'
+import {checkoutStatusRoutes} from './routes/checkoutStatus.js'
+import {stripeCheckoutRoutes} from './routes/stripeCheckout.js'
+import {appleNotificationRoutes} from './routes/notifications/apple.js'
+import {stripeNotificationPlugin} from './routes/notifications/stripe.js'
+import {adminRoutes} from './routes/admin.js'
 
 export async function createApp() {
   const app = Fastify({
@@ -28,9 +35,19 @@ export async function createApp() {
     bodyLimit: 1024 * 1024, // 1 MB
     trustProxy: true,
     disableRequestLogging: false,
-    // Fastify v5 moveu opções de roteador pra routerOptions
     routerOptions: {
       ignoreTrailingSlash: true,
+    },
+    // Ajv: permitir union types nos schemas (ex: {type: ['string', 'null']}).
+    // Default do Ajv strict reclama disso, mas pra requests vindos do app
+    // alguns campos legitimamente são opcionais/null em diferentes versões.
+    ajv: {
+      customOptions: {
+        allowUnionTypes: true,
+        coerceTypes: 'array', // converte string→number quando faz sentido
+        useDefaults: true,
+        removeAdditional: false,
+      },
     },
   })
 
@@ -38,14 +55,20 @@ export async function createApp() {
   // assert, etc). Não puxam dependência pesada.
   await app.register(sensible)
 
-  // TODO Fase 4: registrar plugin de raw body só pra rota Stripe
-  // (vamos adicionar `app.addContentTypeParser('application/json', {parseAs: 'buffer'}, ...)`
-  // com escopo de plugin via `app.register(stripeWebhookPlugin, {prefix: '/stripeNotification'})`).
+  // Stripe webhook precisa ser registrado COMO PLUGIN ISOLADO porque
+  // troca o contentTypeParser de JSON pra buffer (raw body é exigido
+  // pra validar HMAC). Fastify isola contentTypeParser por scope de
+  // plugin — outras rotas continuam parseando JSON normal.
+  await app.register(stripeNotificationPlugin)
 
-  // Rotas
+  // Rotas com parser JSON padrão
   await app.register(healthcheckRoutes)
-
-  // TODO Fase 4: outras rotas (purchase, platform, checkout, admin).
+  await app.register(purchaseRoutes)
+  await app.register(platformRoutes)
+  await app.register(checkoutStatusRoutes)
+  await app.register(stripeCheckoutRoutes)
+  await app.register(appleNotificationRoutes)
+  await app.register(adminRoutes)
 
   // Error handler global — qualquer throw em handler async cai aqui.
   // Fastify já loga internamente; aqui é só pra moldar a resposta.
