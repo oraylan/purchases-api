@@ -82,11 +82,26 @@ export async function handleIosPurchase(req, reply) {
   }
 
   // 5) INSERT user_plus
+  //
+  // Pra iOS guardamos:
+  //   - order_id        = transactionId (ID único dessa compra/renovação)
+  //   - purchase_token  = originalTransactionId (ID estável da sub —
+  //                       MESMO valor pra todas as renovações da mesma sub)
+  //
+  // NÃO guardamos o JWS inteiro porque ele é gigante (~3KB com 3 certs
+  // X.509 inline no header) e ESTOURA a coluna purchase_token. Além
+  // disso, todos os JWS da mesma chave Apple compartilham o mesmo header
+  // → prefix index não distingue, quebraria a constraint UNIQUE composta
+  // (user_plus_unique).
+  //
+  // O JWS já foi validado e decodificado acima — todos os campos
+  // necessários (transactionId, originalTransactionId, expiresDate)
+  // estão nas outras colunas. Esse é o mesmo padrão da apiv2 legada.
   const inserted = await insertIosPurchase({
     userId,
     orderId: transactionId,
     productId,
-    purchaseToken: jws,
+    purchaseToken: originalTransactionId,
     purchaseTime: purchaseDateMs,
     expiryTime: expiresDateMs,
   })
