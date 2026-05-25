@@ -113,6 +113,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@fastify/cors@npm:^11.2.0":
+  version: 11.2.0
+  resolution: "@fastify/cors@npm:11.2.0"
+  dependencies:
+    fastify-plugin: "npm:^5.0.0"
+    toad-cache: "npm:^3.7.0"
+  checksum: 10c0/a3c4f20041196fe6c1f807a4600e9a9842f6984dc7bf362e068048a40d643e106a5679a4f58ee2cf9afb9edddbfd546477f97ed3106ac188dc704fd975cea7f9
+  languageName: node
+  linkType: hard
+
 "@fastify/error@npm:^4.0.0":
   version: 4.2.0
   resolution: "@fastify/error@npm:4.2.0"
@@ -1898,6 +1908,7 @@ __metadata:
   resolution: "purchases-api@workspace:."
   dependencies:
     "@apple/app-store-server-library": "npm:^3.1.0"
+    "@fastify/cors": "npm:^11.2.0"
     "@fastify/sensible": "npm:^6.0.1"
     axios: "npm:^1.7.9"
     discord.js: "npm:^14.18.0"

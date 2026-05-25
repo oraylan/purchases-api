@@ -19,6 +19,7 @@
 // OU via plugin dedicado. Documentado na hora.
 import Fastify from 'fastify'
 import sensible from '@fastify/sensible'
+import cors from '@fastify/cors'
 import {loggerConfig} from './config/logger.js'
 import {healthcheckRoutes} from './routes/healthcheck.js'
 import {purchaseRoutes} from './routes/purchase.js'
@@ -71,6 +72,23 @@ export async function createApp() {
   // Plugins utilitários — pequenos helpers (reply.notFound, httpErrors,
   // assert, etc). Não puxam dependência pesada.
   await app.register(sensible)
+
+  // CORS — o site (hunter.fm) chama /checkout e /checkout/portal direto do
+  // navegador. Sem isso, o browser bloqueia a resposta por falta do header
+  // Access-Control-Allow-Origin. Webhooks (Apple/Stripe) e o app mobile
+  // não passam por CORS, então a allow-list só precisa cobrir o portal.
+  await app.register(cors, {
+    origin: [
+      'https://hunter.fm',
+      'https://www.hunter.fm',
+      /\.hunter\.fm$/,
+      /\.pages\.dev$/,
+      'http://localhost:3000',
+    ],
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Version', 'X-Platform'],
+    credentials: false,
+  })
 
   // Stripe webhook precisa ser registrado COMO PLUGIN ISOLADO porque
   // troca o contentTypeParser de JSON pra buffer (raw body é exigido
