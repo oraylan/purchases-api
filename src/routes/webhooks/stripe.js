@@ -4,10 +4,16 @@
 // (necessário pra validar assinatura HMAC), valida com a lib, e
 // despacha pro handler de domínio.
 //
-// Registrado como plugin SEPARADO no Fastify pra ter o
-// `stripeRawBodyPlugin` (removeContentTypeParser + reAddCom parseAs:
-// buffer) sem afetar o resto da api.
-import {stripeRawBodyPlugin} from '../../middlewares/stripeRawBody.js'
+// Registrado como plugin SEPARADO no Fastify pra que o
+// removeContentTypeParser + addContentTypeParser (parseAs: buffer)
+// fiquem encapsulados nesse scope e não afetem o resto da api.
+//
+// IMPORTANTE: o override do parser PRECISA acontecer no MESMO scope
+// onde a rota é registrada. Registrar via `app.register(rawBodyPlugin)`
+// aninhado cria um child scope — o parser fica nele, mas a rota
+// continua no scope pai e acaba usando o JSON parser herdado. Por isso
+// `removeContentTypeParser` + `addContentTypeParser` são chamados
+// inline aqui, antes de `app.post`.
 import {verifyAndDecodeStripeEvent, StripeWebhookSignatureError} from '../../providers/stripe/verifyWebhook.js'
 import {handleStripeNotification} from '../../handlers/handleStripeNotification.js'
 
@@ -44,6 +50,9 @@ async function stripeWebhookHandler(req, reply) {
 }
 
 export async function stripeWebhookPlugin(app) {
-  await app.register(stripeRawBodyPlugin)
+  app.removeContentTypeParser('application/json')
+  app.addContentTypeParser('application/json', {parseAs: 'buffer'}, (req, body, done) => {
+    done(null, body)
+  })
   app.post('/webhooks/stripe', stripeWebhookHandler)
 }
